@@ -1,6 +1,8 @@
 #include <cstring>
 #include <string>
 #include <unordered_map>
+#include <spawn.h>
+#include <wait.h>
 
 #include <TH/TH.h>
 #include <libshm/err.h>
@@ -24,9 +26,20 @@ AllocInfo get_alloc_info(const char* filename) {
 
 void start_manager() {
   int pipe_ends[2];
+
+  posix_spawn_file_actions_t action;
+  
   SYSCHECK_ERR_RETURN_NEG1(pipe(pipe_ends));
 
+  if (posix_spawn_file_actions_init(&action) != 0)
+  {
+       throw std::exception();
+  }
+  posix_spawn_file_actions_adddup2(&action, pipe_ends[1], STDOUT_FILENO);
+  posix_spawn_file_actions_addclose(&action, pipe_ends[0]);
+
   pid_t pid;
+ /*
   SYSCHECK_ERR_RETURN_NEG1(pid = fork());
   if (!pid) {
     SYSCHECK_ERR_RETURN_NEG1(close(pipe_ends[0]));
@@ -35,7 +48,18 @@ void start_manager() {
     execl(manager_executable_path.c_str(), "torch_shm_manager", NULL);
     exit(1);
   }
+*/
+  char* const args[] = {(char *)manager_executable_path.c_str(), "torch_shm_manager", NULL};
+
+  SYSCHECK_ERR_RETURN_NEG1(posix_spawn(&pid, args[0], &action, NULL, args, NULL));
+
   SYSCHECK_ERR_RETURN_NEG1(close(pipe_ends[1]));
+
+  int status;
+  if (waitpid(pid, &status, 0) < 0)
+  {
+    throw std::exception();
+  }
 
   ssize_t bytes_read;
   char buffer[1000];
@@ -48,6 +72,9 @@ void start_manager() {
     }
   }
   SYSCHECK_ERR_RETURN_NEG1(close(pipe_ends[0]));
+  
+  posix_spawn_file_actions_destroy(&action);
+
   if (handle.length() == 0) {
     std::string msg("error executing torch_shm_manager at \"");
     msg += manager_executable_path;
