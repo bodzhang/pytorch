@@ -9,13 +9,19 @@ Tensors and arbitrary types, and other useful utilities.
 It has a CUDA counterpart, that enables you to run your tensor computations
 on an NVIDIA GPU with compute capability >= 3.0.
 """
-
+print("importing os")
 import os
+print("importing sys")
 import sys
+print("importing platform")
 import platform
+print("importing ._utils")
 from ._utils import _import_dotted_name
+print("importing ._utils_internal")
 from ._utils_internal import get_file_path, prepare_multiprocessing_environment
+print("importing .version")
 from .version import __version__
+print("importing ._six")
 from ._six import string_classes as _string_classes
 
 __all__ = [
@@ -41,6 +47,7 @@ import os as _dl_flags
 # if we have numpy, it *must* be imported before the call to setdlopenflags()
 # or there is risk that later c modules will segfault when importing numpy
 try:
+    print("importing numpy")
     import numpy as _np
 except ImportError:
     pass
@@ -68,9 +75,11 @@ else:
     if not hasattr(_dl_flags, 'RTLD_GLOBAL') or not hasattr(_dl_flags, 'RTLD_LAZY'):
         try:
             # next try if DLFCN exists
+            print("try importing DLFCN")
             import DLFCN as _dl_flags
         except ImportError:
             # as a last attempt, use compile-time constants
+            print("importing DLFCN failed")
             import torch._dl as _dl_flags
 
     old_flags = sys.getdlopenflags()
