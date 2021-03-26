@@ -78,7 +78,11 @@ else:
 
 del _dl_flags
 
+print("before importing torch._C")
+
 from torch._C import *
+
+print("after importing torch._C")
 
 __all__ += [name for name in dir(_C)
             if name[0] != '_' and
