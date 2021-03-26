@@ -9,19 +9,13 @@ Tensors and arbitrary types, and other useful utilities.
 It has a CUDA counterpart, that enables you to run your tensor computations
 on an NVIDIA GPU with compute capability >= 3.0.
 """
-print("importing os")
+print("importing torch ...")
 import os
-print("importing sys")
 import sys
-print("importing platform")
 import platform
-print("importing ._utils")
 from ._utils import _import_dotted_name
-print("importing ._utils_internal")
 from ._utils_internal import get_file_path, prepare_multiprocessing_environment
-print("importing .version")
 from .version import __version__
-print("importing ._six")
 from ._six import string_classes as _string_classes
 
 __all__ = [
@@ -47,12 +41,14 @@ import os as _dl_flags
 # if we have numpy, it *must* be imported before the call to setdlopenflags()
 # or there is risk that later c modules will segfault when importing numpy
 try:
-    print("importing numpy")
     import numpy as _np
 except ImportError:
+    print("failed to import numpy, non-fatal, continue")
     pass
 
-if platform.system() == 'Windows':
+print("Skip OS detection, assume Linux. platform.system() triggers fork()")
+#if platform.system() == 'Windows':
+if 0:
     # first get nvToolsExt PATH
     def get_nvToolsExt_path():
         NVTOOLEXT_HOME = _dl_flags.getenv('NVTOOLSEXT_PATH', 'C:\\Program Files\\NVIDIA Corporation\\NvToolsExt')
@@ -87,17 +83,15 @@ else:
 
 del _dl_flags
 
-print("before importing torch._C")
-
+print("Importing torch._C, with libshm that uses posix_spawn instead of fork/exec")
 from torch._C import *
-
-print("after importing torch._C")
 
 __all__ += [name for name in dir(_C)
             if name[0] != '_' and
             not name.endswith('Base')]
 
-if platform.system() != 'Windows':
+#if platform.system() != 'Windows':
+if 1:
     sys.setdlopenflags(old_flags)
     del old_flags
 
@@ -267,7 +261,8 @@ _tensor_classes = set()
 ################################################################################
 
 def manager_path():
-    if platform.system() == 'Windows':
+#    if platform.system() == 'Windows':
+    if 0:
         return b""
     path = get_file_path('torch', 'bin', 'torch_shm_manager')
     prepare_multiprocessing_environment(get_file_path('torch'))
@@ -360,3 +355,5 @@ import torch.quasirandom
 # the memory format could be preserved, and it was switched to old default
 # behaviour of contiguous
 legacy_contiguous_format = contiguous_format
+
+print("torch imported")
